@@ -1,0 +1,16 @@
+services:
+  ais-collision:
+    build: .
+    volumes:
+      - ./Data:/workspace/Data:ro
+      - ./output:/workspace/output
+    command:
+      [
+        "python",
+        "-m",
+        "ais_collision.main",
+        "--input-glob",
+        "/workspace/Data/aisdk-2021-12-*.csv",
+        "--output-dir",
+        "/workspace/output"
+      ]
