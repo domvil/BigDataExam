@@ -8,9 +8,15 @@ services:
       [
         "python",
         "-m",
-        "ais_collision.main",
+        "ais_collision.batch",
         "--input-glob",
         "/workspace/Data/aisdk-2021-12-*.csv",
         "--output-dir",
-        "/workspace/output"
+        "/workspace/output/full-month",
+        "--driver-memory",
+        "8g",
+        "--master",
+        "local[4]",
+        "--shuffle-partitions",
+        "200"
       ]

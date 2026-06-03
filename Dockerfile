@@ -20,4 +20,4 @@ COPY src ./src
 COPY README.md ./README.md
 COPY REPORT.md ./REPORT.md
 
-CMD ["python", "-m", "ais_collision.main", "--input-glob", "/workspace/Data/aisdk-2021-12-*.csv", "--output-dir", "/workspace/output"]
+CMD ["python", "-m", "ais_collision.batch", "--input-glob", "/workspace/Data/aisdk-2021-12-*.csv", "--output-dir", "/workspace/output/full-month", "--driver-memory", "8g", "--master", "local[4]", "--shuffle-partitions", "200"]

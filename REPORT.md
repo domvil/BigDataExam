@@ -72,17 +72,22 @@ The final 20-minute trajectory visualization is embedded below.
 
 ## Reproducibility
 
-Local full-month run:
+Docker full-month run:
 
 ```powershell
-$env:PYTHONPATH='src'
-$env:PYTHONUNBUFFERED='1'
-.\.venv\Scripts\python.exe -u -m ais_collision.batch --input-glob "Data/aisdk-2021-12-*.csv" --output-dir "output/full-month" --master "local[6]" --driver-memory "12g" --shuffle-partitions 200
-```
-
-Docker build and run:
-
-```powershell
-docker build -t ais-collision-detector .
 docker compose up --build
 ```
+
+Docker run with explicit Spark tuning overrides:
+
+```powershell
+docker compose run --rm ais-collision \
+   python -m ais_collision.batch \
+   --input-glob "/workspace/Data/aisdk-2021-12-*.csv" \
+   --output-dir "/workspace/output/full-month" \
+   --driver-memory 10g \
+   --master "local[6]" \
+   --shuffle-partitions 200
+```
+
+The default Compose service already runs the batch job inside Docker and writes results to `output/full-month/`. A non-zero exit on a single daily file can be a valid pipeline rejection rather than a container failure.

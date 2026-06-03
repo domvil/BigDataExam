@@ -51,37 +51,14 @@ The current confirmation step therefore requires both geometry and disruption:
 
 This is why a single day can have several `top_candidates` but still no accepted collision, and why the final month-level result is usually only one pair.
 
-## Local run
-
-Install the dependencies into your chosen Python environment, then run the CLI from the repository root.
-
-```powershell
-$env:PYTHONPATH='src'
-.\.venv\Scripts\python.exe -m ais_collision.main --input-glob "Data/aisdk-2021-12-*.csv" --output-dir output
-```
-
-Useful tuning flags while iterating:
-
-```powershell
-$env:PYTHONPATH='src'
-.\.venv\Scripts\python.exe -m ais_collision.main \
-  --input-glob "Data/aisdk-2021-12-0*.csv" \
-  --output-dir output \
-  --candidate-distance-m 400 \
-  --moving-sog-knots 1.0
-```
-
-For a full-month run with one global output folder:
-
-```powershell
-$env:PYTHONPATH='src'
-$env:PYTHONUNBUFFERED='1'
-.\.venv\Scripts\python.exe -u -m ais_collision.batch --input-glob "Data/aisdk-2021-12-*.csv" --output-dir output/full-month
-```
-
-That writes only the final month-level outputs to `output/full-month/`. The batch runner no longer creates per-day working folders.
-
 ## Docker run
+
+Use Docker from the repository root. This is the recommended execution path for this project.
+
+Prerequisites:
+
+- Docker Desktop is installed and running.
+- You run the command from the repository root so `Data/` and `output/` mount into the container correctly.
 
 Build and run with Docker Compose:
 
@@ -89,7 +66,41 @@ Build and run with Docker Compose:
 docker compose up --build
 ```
 
-Or run the container directly:
+The default container command runs the month-level batch job. It reads the AIS CSV files from `Data/` and writes the final outputs to `output/full-month/` on the host.
+
+The default Spark tuning inside the container is:
+
+- `--driver-memory 8g`
+- `--master local[4]`
+- `--shuffle-partitions 200`
+
+If you want to rerun without rebuilding the image:
+
+```powershell
+docker compose run --rm ais-collision
+```
+
+If you want to override the tuning flags for a heavier local machine, pass them explicitly:
+
+```powershell
+docker compose run --rm ais-collision \
+  python -m ais_collision.batch \
+  --input-glob "/workspace/Data/aisdk-2021-12-*.csv" \
+  --output-dir "/workspace/output/full-month" \
+  --driver-memory 10g \
+  --master "local[6]" \
+  --shuffle-partitions 200
+```
+
+Recommended starting points:
+
+- 8 GB Docker memory available: `--driver-memory 4g` and `--master "local[4]"`
+- 16 GB Docker memory available: `--driver-memory 8g` to `10g` and `--master "local[6]"`
+- Keep Spark driver memory below the Docker memory limit so the JVM still has headroom.
+
+If a single day returns a rejection or no accepted collision, that is an application-level result from the stricter collision checks, not a Docker failure. The batch command is the intended full-month run.
+
+If you prefer a plain `docker run` command instead of Compose:
 
 ```powershell
 docker build -t ais-collision-detector .
@@ -99,9 +110,35 @@ docker run --rm \
   ais-collision-detector
 ```
 
+On Windows PowerShell, if the bind mount form above gives you path parsing issues, use quoted absolute paths instead:
+
+```powershell
+docker build -t ais-collision-detector .
+docker run --rm \
+  -v "${PWD}\Data:/workspace/Data:ro" \
+  -v "${PWD}\output:/workspace/output" \
+  ais-collision-detector
+```
+
+If you want explicit Docker resource limits as well, use plain Docker and keep the Spark driver below that limit:
+
+```powershell
+docker build -t ais-collision-detector .
+docker run --rm --memory=12g --cpus=6 \
+  -v "${PWD}\Data:/workspace/Data:ro" \
+  -v "${PWD}\output:/workspace/output" \
+  ais-collision-detector \
+  python -m ais_collision.batch \
+  --input-glob "/workspace/Data/aisdk-2021-12-*.csv" \
+  --output-dir "/workspace/output/full-month" \
+  --driver-memory 10g \
+  --master "local[6]" \
+  --shuffle-partitions 200
+```
+
 ## Outputs
 
-The CLI writes the following files into `output/`:
+The batch run writes the following files into `output/full-month/`:
 
 - `collision_summary.json`: final selected candidate plus validation details.
 - `top_collision_candidates.csv`: ranked shortlist of plausible encounters, not a list of confirmed collisions.
