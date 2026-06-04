@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from math import hypot
 from pathlib import Path
 
 import matplotlib
@@ -20,6 +21,10 @@ def _format_marker_label(prefix: str, point_index: int, total_points: int, times
     return f"{prefix} ({point_index}/{total_points})\n{time_label} UTC"
 
 
+def _near_event(point_lon: float, point_lat: float, event_lon: float, event_lat: float) -> bool:
+    return hypot(point_lon - event_lon, point_lat - event_lat) <= 0.004
+
+
 def plot_collision(result: CollisionResult, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -28,6 +33,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
     ax.set_facecolor("#d8edf7")
     colors = ["#0f766e", "#c2410c"]
     line_effect = [pe.Stroke(linewidth=4.8, foreground="white", alpha=0.75), pe.Normal()]
+    candidate = result.selected_candidate
 
     for index, (mmsi, points) in enumerate(sorted(result.trajectories.items())):
         if not points:
@@ -43,7 +49,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
             linewidth=2.3,
             marker="o",
             markersize=3.2,
-            alpha=0.92,
+            alpha=0.84,
             label=label,
             zorder=4,
         )
@@ -61,20 +67,24 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
             )
             start_dx = lons[1] - lons[0]
             start_dy = lats[1] - lats[0]
-            ax.annotate(
+            direction_arrow = ax.annotate(
                 "",
                 xy=(lons[1], lats[1]),
                 xytext=(lons[0], lats[0]),
                 arrowprops={
                     "arrowstyle": "-|>",
                     "color": color,
-                    "linewidth": 2.0,
-                    "mutation_scale": 16,
+                    "linewidth": 2.8,
+                    "mutation_scale": 22,
                     "shrinkA": 0,
                     "shrinkB": 0,
                 },
-                zorder=6,
+                zorder=8,
             )
+            if direction_arrow.arrow_patch is not None:
+                direction_arrow.arrow_patch.set_path_effects(
+                    [pe.Stroke(linewidth=5.2, foreground="white", alpha=0.92), pe.Normal()]
+                )
         else:
             start_dx = 0.0
             start_dy = 0.0
@@ -94,16 +104,34 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
             lats[-1],
             color=color,
             marker="X",
-            s=150,
+            s=230,
             edgecolors="white",
-            linewidths=1.2,
-            zorder=7,
+            linewidths=1.8,
+            zorder=9,
+        )
+        ax.scatter(
+            lons[-1],
+            lats[-1],
+            facecolors="none",
+            edgecolors="white",
+            linewidths=2.2,
+            s=360,
+            alpha=0.9,
+            zorder=8,
         )
 
         start_offset_x = 12 if start_dx >= 0 else -96
         start_offset_y = 14 if start_dy >= 0 else -28
         end_offset_x = 12 if len(points) == 1 or (lons[-1] - lons[-2]) >= 0 else -92
         end_offset_y = 12 if len(points) == 1 or (lats[-1] - lats[-2]) >= 0 else -26
+        if _near_event(
+            lons[-1],
+            lats[-1],
+            candidate.collision_longitude,
+            candidate.collision_latitude,
+        ):
+            end_offset_x = -120 if end_offset_x > 0 else end_offset_x
+            end_offset_y = -34 if end_offset_y > 0 else -38
 
         ax.annotate(
             _format_marker_label("Start", 1, len(points), points[0].timestamp),
@@ -114,6 +142,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
             fontweight="bold",
             color=color,
             bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": color, "alpha": 0.92},
+            zorder=10,
         )
         ax.annotate(
             _format_marker_label("End", len(points), len(points), points[-1].timestamp),
@@ -124,9 +153,10 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
             fontweight="bold",
             color=color,
             bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": color, "alpha": 0.92},
+            arrowprops={"arrowstyle": "->", "color": color, "linewidth": 1.2},
+            zorder=10,
         )
 
-    candidate = result.selected_candidate
     ax.scatter(
         [candidate.collision_longitude],
         [candidate.collision_latitude],
@@ -159,8 +189,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
     )
     ax.annotate(
         "Potential collision\n"
-        f"{candidate.collision_timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
-        f"{candidate.distance_m:.2f} m raw separation",
+        f"{candidate.collision_timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}",
         (candidate.collision_longitude, candidate.collision_latitude),
         textcoords="offset points",
         xytext=(16, 16),
@@ -190,7 +219,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
     ax.text(
         0.015,
         0.985,
-        "Large circle = start\nArrow = initial direction\nLarge X = end",
+        "Large circle = start\nArrowhead = initial direction\nLarge X = end",
         transform=ax.transAxes,
         ha="left",
         va="top",
