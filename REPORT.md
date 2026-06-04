@@ -21,6 +21,24 @@ The solution is implemented in PySpark so the raw monthly AIS data can be proces
 
 The pipeline works in five stages.
 
+
+### Default thresholds used in the code
+
+Unless a command-line flag overrides them, the report refers to the following concrete defaults from the implementation:
+
+- Search area: center `(55.225000, 14.245000)` with radius `50 nm`.
+- Input validity: only `Class A` and `Class B` AIS messages with valid timestamps and coordinates are kept.
+- Stationary-status filter: `status` values `at anchor`, `moored`, and `aground` are excluded.
+- Moving-speed filter: `SOG >= 1.5 kn`.
+- GPS-jump filter: implied speed between consecutive messages from the same vessel must stay at or below `70 kn`.
+- Candidate generation: same minute bucket, `150 m` spatial grid, raw separation `<= 100 m`, timestamp gap `<= 30 s`, and keep the best `12` ranked pairs for trajectory reconstruction.
+- Trajectory window filter: `10 min` before and after the event, at least `3` points, and the track must show either `>= 1000 m` path length, `>= 250 m` displacement, or average `SOG >= 1.5 kn`.
+- Synchronized validation: interpolation every `5 s` and a direct synchronized confirmation threshold of `<= 25 m`.
+- Parallel-traffic rejection: heading difference `<= 12 deg` and either `>= 120 s` spent within `30 m` or route-overlap fraction `>= 0.6`.
+- Crossing-style fallback confirmation: raw distance `<= 8 m`, raw timestamp gap `>= 15 s`, synchronized distance `<= 100 m`, heading difference `>= 20 deg`, route-overlap fraction `<= 0.2`, and combined `SOG >= 8 kn`.
+- Post-event anomaly requirement: at least one track ends within `30 s` of the event, plus at least one speed-drop anomaly measured over `180 s` windows with pre-event average `SOG >= 4 kn`, absolute drop `>= 3 kn`, and relative drop `>= 35%`.
+- Service-vessel keywords used for ranking penalties and final rejection: `rescue`, `kbv`, `kyst`, `coast`, `pilot`, `patrol`, and `sar`.
+
 ### 1. Spatial and temporal restriction
 
 The pipeline reads the December AIS CSV files with Spark's CSV reader, parses timestamps, and drops records with invalid coordinates or missing time information. It first applies a coarse geographic filter, then a precise Haversine-distance filter centered on the assignment coordinate. This two-step restriction reduces the amount of data that reaches the more expensive pairing stage.
