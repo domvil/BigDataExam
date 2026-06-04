@@ -138,7 +138,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
         bbox={"boxstyle": "round,pad=0.3", "fc": "white", "ec": "#999999"},
     )
 
-    ax.set_title("AIS trajectories 10 minutes before and after the selected collision candidate")
+    ax.set_title("AIS trajectories 20 minutes before and after the selected collision candidate")
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
     ax.grid(True, alpha=0.25)
