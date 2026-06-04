@@ -30,6 +30,8 @@ docker compose run --rm ais-collision
 
 ## Tuning
 
+Configuration is adjusted through CLI flags passed to `python -m ais_collision.batch` or `python -m ais_collision.main`.
+
 The default Docker command uses these Spark settings:
 
 - `--driver-memory 8g`
@@ -53,6 +55,27 @@ Practical starting points:
 - If Docker Desktop has about 8 GB available, use `--driver-memory 4g` to `8g` and `--master "local[4]"`.
 - If Docker Desktop has about 16 GB available, use `--driver-memory 8g` to `10g` and `--master "local[6]"`.
 - Keep Spark driver memory below the Docker memory limit so the JVM has headroom.
+
+Supported flags for `python -m ais_collision.batch`:
+
+- `--input-glob`: choose which AIS CSV files to process.
+- `--output-dir`: change where the JSON, CSV, and plot outputs are written.
+- `--master`: set the Spark master URL.
+- `--driver-memory`: set Spark driver memory.
+- `--moving-sog-knots`: minimum speed used to treat a vessel as moving.
+- `--candidate-distance-m`: maximum raw separation for candidate encounters.
+- `--gps-speed-cap-knots`: maximum implied speed used to reject GPS jumps.
+- `--grid-size-m`: spatial bucket size before the self-join.
+- `--max-time-delta-s`: maximum timestamp gap allowed between paired AIS messages.
+- `--top-n-candidates`: how many candidates are kept for trajectory evaluation.
+- `--trajectory-window-minutes`: trajectory window before and after the selected event.
+- `--shuffle-partitions`: Spark shuffle partition count.
+
+Additional flags for `python -m ais_collision.main`:
+
+- `--center-lat`: search-center latitude.
+- `--center-lon`: search-center longitude.
+- `--radius-nm`: search radius in nautical miles.
 
 ## Outputs
 
