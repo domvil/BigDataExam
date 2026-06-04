@@ -2,6 +2,8 @@
 
 This repository contains a PySpark solution for the December 2021 AIS assignment. The project is designed to be run in Docker and produces the final detected collision candidate, trajectory export, ranked candidate list, and visualization.
 
+**Written report:** See [REPORT.md](REPORT.md) for a concise discussion of the findings, the methodology used to filter AIS noise and exclude false positives, the collision-verification logic, and practical notes about the dataset and computational strategy.
+
 ## Project layout
 
 - `src/ais_collision/pipeline.py`: Spark loading, filtering, candidate generation, and trajectory extraction.
