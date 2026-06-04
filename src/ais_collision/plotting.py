@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
 
 from .pipeline import CollisionResult
 
@@ -23,7 +24,10 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(11, 8.5), constrained_layout=True)
-    colors = ["#005f73", "#bb3e03"]
+    fig.patch.set_facecolor("#eef7fb")
+    ax.set_facecolor("#d8edf7")
+    colors = ["#0f766e", "#c2410c"]
+    line_effect = [pe.Stroke(linewidth=4.8, foreground="white", alpha=0.75), pe.Normal()]
 
     for index, (mmsi, points) in enumerate(sorted(result.trajectories.items())):
         if not points:
@@ -32,16 +36,18 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
         lons = [point.longitude for point in points]
         lats = [point.latitude for point in points]
         label = f"{points[0].vessel_name} ({mmsi})"
-        ax.plot(
+        (track_line,) = ax.plot(
             lons,
             lats,
             color=color,
-            linewidth=2.0,
+            linewidth=2.3,
             marker="o",
-            markersize=3.0,
-            alpha=0.8,
+            markersize=3.2,
+            alpha=0.92,
             label=label,
+            zorder=4,
         )
+        track_line.set_path_effects(line_effect)
 
         if len(points) > 1:
             ax.plot(
@@ -51,6 +57,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
                 linewidth=4.4,
                 alpha=0.95,
                 solid_capstyle="round",
+                zorder=5,
             )
             start_dx = lons[1] - lons[0]
             start_dy = lats[1] - lats[0]
@@ -123,25 +130,63 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
     ax.scatter(
         [candidate.collision_longitude],
         [candidate.collision_latitude],
-        color="#ae2012",
+        facecolors="none",
+        edgecolors="#ef4444",
+        linewidths=2.2,
+        s=420,
+        alpha=0.5,
+        zorder=10,
+    )
+    ax.scatter(
+        [candidate.collision_longitude],
+        [candidate.collision_latitude],
+        color="white",
+        edgecolors="#7f1d1d",
+        linewidths=1.8,
+        s=210,
+        zorder=11,
+    )
+    ax.scatter(
+        [candidate.collision_longitude],
+        [candidate.collision_latitude],
+        color="#b91c1c",
         marker="X",
-        s=120,
-        label="Closest approach",
-        zorder=5,
+        s=190,
+        edgecolors="white",
+        linewidths=1.4,
+        label="Potential collision",
+        zorder=12,
     )
     ax.annotate(
-        candidate.collision_timestamp.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "Potential collision\n"
+        f"{candidate.collision_timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+        f"{candidate.distance_m:.2f} m raw separation",
         (candidate.collision_longitude, candidate.collision_latitude),
         textcoords="offset points",
-        xytext=(10, 10),
+        xytext=(16, 16),
         fontsize=10,
-        bbox={"boxstyle": "round,pad=0.3", "fc": "white", "ec": "#999999"},
+        color="#7f1d1d",
+        fontweight="bold",
+        bbox={"boxstyle": "round,pad=0.35", "fc": "#fff8f7", "ec": "#b45309", "alpha": 0.97},
+        arrowprops={"arrowstyle": "->", "color": "#7f1d1d", "linewidth": 1.6},
+        zorder=13,
     )
 
-    ax.set_title("AIS trajectories 20 minutes before and after the selected collision candidate")
+    ax.set_title(
+        "AIS trajectories in a 20-minute window around the selected collision candidate",
+        fontsize=15,
+        fontweight="bold",
+        pad=14,
+        color="#17384d",
+    )
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
-    ax.grid(True, alpha=0.25)
+    ax.grid(True, color="white", linewidth=1.0, alpha=0.72)
+    ax.margins(x=0.06, y=0.06)
+    for spine in ax.spines.values():
+        spine.set_color("#8fb0c4")
+        spine.set_linewidth(1.2)
+    ax.tick_params(colors="#35586b")
     ax.text(
         0.015,
         0.985,
@@ -150,7 +195,7 @@ def plot_collision(result: CollisionResult, output_path: Path) -> Path:
         ha="left",
         va="top",
         fontsize=9,
-        bbox={"boxstyle": "round,pad=0.3", "fc": "white", "ec": "#c8c8c8", "alpha": 0.92},
+        bbox={"boxstyle": "round,pad=0.3", "fc": "white", "ec": "#b8cfdd", "alpha": 0.94},
     )
     ax.legend(loc="best")
 
