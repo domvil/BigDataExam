@@ -131,13 +131,11 @@ This is visible in the month summary. Some candidates have even smaller raw dist
 
 Another shortlisted pair, `CHARVIL` and `NYBOLIG`, reaches `3.517 m`, but without the stronger geometry-and-disruption evidence required by the final confirmation step, it should not displace the selected crossing-style encounter.
 
-This is why the pipeline no longer forces one result per day. A day may contain no valid collision-like event at all. The batch run therefore keeps only daily winners that survive the strict validation and then selects one global month-level winner.
-
 ## Limitations
 
-The result is still based on AIS behavior rather than direct physical damage reports. That means the system detects the most collision-like encounter in the available telemetry, not legal proof of an accident. The approach also depends on the density and timing of AIS messages. Sparse updates can widen the gap between raw observed proximity and synchronized trajectory estimates.
+The result is based only on AIS messages. If updates are sparse, noisy, or slightly offset in time, the estimated encounter can shift, and the raw minimum distance can differ from the synchronized trajectory estimate.
 
-Even with those limitations, the added post-event anomaly requirement and service-vessel filtering substantially reduce the risk of selecting an obviously operational or non-disruptive encounter.
+The added anomaly checks and service-vessel filtering reduce obvious false positives, but this stricter filtering can also remove real collisions before they reach the final shortlist. The output should therefore be read as the strongest collision candidate that survives the chosen filters, not necessarily every real collision in the data.
 
 ## Visualization
 
