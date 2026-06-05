@@ -85,9 +85,3 @@ The batch run writes these files into `output/full-month/`:
 - `top_collision_candidates.csv`: ranked shortlist of plausible encounters.
 - `trajectory_<mmsi1>_<mmsi2>.csv`: exported 10-minute before/after track for the selected pair.
 - `collision_trajectory.png`: static plot for the selected pair.
-
-## Notes
-
-- The Docker workflow is the intended way to run this repository.
-- A failed single-day candidate is not necessarily a Docker problem; the collision filters can legitimately reject a day with no convincing impact.
-- More detail about the methodology and findings is in `REPORT.md`.
