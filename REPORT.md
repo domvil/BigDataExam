@@ -2,7 +2,7 @@
 
 ## Objective
 
-The task is to identify the collision, or closest collision-like encounter, inside a 50 nautical mile radius around `(55.225000, 14.245000)` during December 2021, while filtering out stationary vessels and noisy AIS behavior. The final deliverables must include the detected vessel pair, event time and coordinates, and a 10-minute before/after trajectory visualization.
+The task is to identify the collision, or closest collision-like encounter, inside a 50 nautical mile radius around `(55.225000, 14.245000)` during December 2021, while filtering out stationary vessels and noisy AIS behavior. The final deliverables must include the detected vessel pair, event time and coordinates, and a 20-minute before/after trajectory visualization.
 
 ## Data and constraints
 
